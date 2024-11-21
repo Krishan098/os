@@ -1,0 +1,115 @@
+#include <stdio.h>
+#include <conio.h>
+
+#define MAX 10 // Maximum number of processes and resource types
+
+int alloc[MAX][MAX], max[MAX][MAX], need[MAX][MAX], avail[MAX];
+int n, m; // n = number of processes, m = number of resource types
+
+// Function to calculate the need matrix
+void calculateNeed() {
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            need[i][j] = max[i][j] - alloc[i][j];
+        }
+    }
+}
+
+// Function to check if a process can be safely executed
+int canExecute(int process) {
+    for (int j = 0; j < m; j++) {
+        if (need[process][j] > avail[j]) {
+            return 0; // Cannot execute
+        }
+    }
+    return 1; // Can execute
+}
+
+// Banker's Algorithm
+void bankersAlgorithm() {
+    int finish[MAX] = {0}; // Array to mark finished processes
+    int safeSequence[MAX]; // Array to store the safe sequence
+    int work[MAX], index = 0;
+
+    // Initialize work as available resources
+    for (int i = 0; i < m; i++) {
+        work[i] = avail[i];
+    }
+
+    // Find safe sequence
+    for (int count = 0; count < n; count++) {
+        int found = 0;
+        for (int i = 0; i < n; i++) {
+            if (!finish[i] && canExecute(i)) {
+                for (int j = 0; j < m; j++) {
+                    work[j] += alloc[i][j];
+                }
+                safeSequence[index++] = i;
+                finish[i] = 1;
+                found = 1;
+            }
+        }
+        if (!found) {
+            printf("\nThe system is in an unsafe state!\n");
+            return;
+        }
+    }
+
+    // Print the safe sequence
+    printf("\nThe system is in a safe state.\nSafe Sequence: ");
+    for (int i = 0; i < n; i++) {
+        printf("P%d ", safeSequence[i]);
+    }
+    printf("\n");
+}
+
+void main() {
+    clrscr();
+    printf("Banker's Algorithm\n");
+    printf("-------------------\n");
+
+    // Input the number of processes and resource types
+    printf("Enter the number of processes: ");
+    scanf("%d", &n);
+    printf("Enter the number of resource types: ");
+    scanf("%d", &m);
+
+    // Input allocation matrix
+    printf("\nEnter the allocation matrix:\n");
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            scanf("%d", &alloc[i][j]);
+        }
+    }
+
+    // Input max matrix
+    printf("\nEnter the maximum demand matrix:\n");
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            scanf("%d", &max[i][j]);
+        }
+    }
+
+    // Input available resources
+    printf("\nEnter the available resources: ");
+    for (int i = 0; i < m; i++) {
+        scanf("%d", &avail[i]);
+    }
+
+    // Calculate the need matrix
+    calculateNeed();
+
+    // Print the need matrix
+    printf("\nNeed Matrix:\n");
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            printf("%d ", need[i][j]);
+        }
+        printf("\n");
+    }
+
+    // Perform Banker's Algorithm
+    bankersAlgorithm();
+
+    getch();
+}
