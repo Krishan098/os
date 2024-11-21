@@ -1,0 +1,72 @@
+#include <stdio.h>
+#include <conio.h>
+#include <dos.h>
+#include <process.h>
+
+// Semaphore variables
+int readcount = 0;   // Number of active readers
+int writecount = 0;  // Number of active writers
+int mutex = 1;       // Controls access to `readcount`
+int wrt = 1;         // Controls access to the shared resource
+
+// Semaphore wait operation
+void wait(int *s) {
+    while (*s <= 0);  // Busy-wait if semaphore is not available
+    (*s)--;
+}
+
+// Semaphore signal operation
+void signal(int *s) {
+    (*s)++;
+}
+
+// Reader process
+void reader(int id) {
+    wait(&mutex);           // Gain access to `readcount`
+    readcount++;
+    if (readcount == 1)     // First reader blocks writers
+        wait(&wrt);
+    signal(&mutex);         // Release access to `readcount`
+
+    // Critical section (reading)
+    printf("Reader %d is reading the shared resource.\n", id);
+    delay(1000);
+
+    wait(&mutex);           // Gain access to `readcount`
+    readcount--;
+    if (readcount == 0)     // Last reader unblocks writers
+        signal(&wrt);
+    signal(&mutex);         // Release access to `readcount`
+}
+
+// Writer process
+void writer(int id) {
+    wait(&wrt);             // Gain exclusive access to the shared resource
+
+    // Critical section (writing)
+    printf("Writer %d is writing to the shared resource.\n", id);
+    delay(2000);
+
+    signal(&wrt);           // Release access to the shared resource
+}
+
+void main() {
+    int i;
+    clrscr();
+
+    printf("Reader-Writer Problem using Semaphores\n");
+    printf("--------------------------------------\n");
+
+    for (i = 1; i <= 3; i++) {
+        if (fork() == 0) { // Simulate reader processes
+            reader(i);
+            exit(0);
+        }
+        if (fork() == 0) { // Simulate writer processes
+            writer(i);
+            exit(0);
+        }
+    }
+
+    getch();
+}
